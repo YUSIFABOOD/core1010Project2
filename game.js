@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Home, Globe, Mountain, Users, Sparkles, Dice1, Smile, Frown, Meh, AlertCircle, SkipForward, Trophy, Zap } from 'lucide-react';
+const { useState, useEffect } = React;
+const { Heart, Home, Globe, Mountain, Users, Sparkles, Dice1, Smile, Frown, Meh, AlertCircle, SkipForward, Trophy, Zap } = lucide;
 
 const REGIONS = [
   { name: 'Home', color: 'bg-amber-100', icon: Home },
@@ -84,7 +84,7 @@ const createBoardLayout = () => {
   return shuffleArray(layout);
 };
 
-export default function RootsRoutesGame() {
+function RootsRoutesGame() {
   const [players, setPlayers] = useState([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
