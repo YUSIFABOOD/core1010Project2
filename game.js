@@ -1,5 +1,5 @@
-const { useState, useEffect } = React;
-const { Heart, Home, Globe, Mountain, Users, Sparkles, Dice1, Smile, Frown, Meh, AlertCircle, SkipForward, Trophy, Zap } = lucide;
+import React, { useState, useEffect } from 'react';
+import { Heart, Home, Globe, Mountain, Users, Sparkles, Dice1, Smile, Frown, Meh, AlertCircle, SkipForward, Trophy, Zap } from 'lucide-react';
 
 const REGIONS = [
   { name: 'Home', color: 'bg-amber-100', icon: Home },
@@ -84,7 +84,7 @@ const createBoardLayout = () => {
   return shuffleArray(layout);
 };
 
-function RootsRoutesGame() {
+export default function RootsRoutesGame() {
   const [players, setPlayers] = useState([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
@@ -218,6 +218,7 @@ function RootsRoutesGame() {
     }
 
     setIsDiceRolling(true);
+    playSound('dice');
     
     // Animated dice roll
     let rollCount = 0;
@@ -228,6 +229,7 @@ function RootsRoutesGame() {
         clearInterval(rollInterval);
         const finalRoll = rollDice();
         setIsDiceRolling(false);
+        playSound('move');
         
         const newPlayers = [...players];
         const currentPlayer = newPlayers[currentPlayerIndex];
@@ -239,6 +241,7 @@ function RootsRoutesGame() {
         setPlayers(newPlayers);
         
         setTimeout(() => {
+          playSound('card');
           if (Math.random() > 0.3) {
             setIsEmotionRolling(true);
             
@@ -267,15 +270,18 @@ function RootsRoutesGame() {
             if (card.effect === 'gain') {
               currentPlayer.belongingTokens += card.tokens;
               setTokenAnimation({ type: 'gain', count: card.tokens });
+              playSound('token-gain');
               setTimeout(() => setTokenAnimation(null), 2000);
             } else if (card.effect === 'lose') {
               currentPlayer.belongingTokens = Math.max(0, currentPlayer.belongingTokens - card.tokens);
               setTokenAnimation({ type: 'lose', count: card.tokens });
+              playSound('token-lose');
               setTimeout(() => setTokenAnimation(null), 2000);
             } else if (card.effect === 'skip') {
               currentPlayer.skipTurn = true;
             } else if (card.effect === 'move') {
               currentPlayer.position = Math.min(currentPlayer.position + card.tokens, boardLayout.length - 1);
+              playSound('move');
             }
             setPlayers(newPlayers);
             setShowCard(true);
@@ -310,6 +316,7 @@ function RootsRoutesGame() {
       setPlayers(newPlayers);
       setMessage(`${newPlayers[fromPlayerId].name} gave a Belonging Token!`);
       setTokenAnimation({ type: 'gain', count: 1 });
+      playSound('token-gain');
       setTimeout(() => setTokenAnimation(null), 2000);
     }
   };
@@ -342,6 +349,7 @@ function RootsRoutesGame() {
     newPlayers[currentPlayerIndex].inCircle = true;
     setPlayers(newPlayers);
     setCelebrationAnimation(true);
+    playSound('celebration');
     setMessage(`${newPlayers[currentPlayerIndex].name} has reached the Circle of Belonging! 🎉`);
     setTimeout(() => setCelebrationAnimation(false), 3000);
   };
@@ -444,10 +452,16 @@ function RootsRoutesGame() {
       
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-6">
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 mb-2 animate-pulse">
+          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 mb-2">
             🎪 Roots & Routes 🎪
           </h1>
-          <p className="text-xl font-bold text-gray-700">The Journey of a Lifetime!</p>
+          <p className="text-xl font-bold text-gray-700 mb-3">The Journey of a Lifetime!</p>
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
+          >
+            {soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF'}
+          </button>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -457,10 +471,10 @@ function RootsRoutesGame() {
               {/* Circular Board with Shuffled Regions */}
               <div className="w-full aspect-square max-w-2xl mx-auto relative">
                 {/* Center Circle - MUCH BIGGER AND FUNNIER */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-2xl z-10 animate-pulse border-8 border-white">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-2xl z-10 border-8 border-white">
                   <div className="text-center">
                     <div className="text-5xl mb-2">🏆</div>
-                    <Heart className="w-12 h-12 mx-auto text-white mb-2 animate-bounce" />
+                    <Heart className="w-12 h-12 mx-auto text-white mb-2" />
                     <span className="text-white font-black text-lg">CIRCLE OF<br/>AWESOME!</span>
                   </div>
                 </div>
@@ -486,17 +500,16 @@ function RootsRoutesGame() {
                     >
                       {space.isMainSpace && (
                         <div className="relative">
-                          <Icon className="w-8 h-8 animate-bounce" />
+                          <Icon className="w-8 h-8" />
                           <div className="absolute -top-2 -right-2 text-2xl">✨</div>
                         </div>
                       )}
                       {players.filter(p => p.position === index).map((player, i) => (
                         <div
                           key={player.id}
-                          className={`absolute w-10 h-10 ${player.color} rounded-full border-4 border-white shadow-2xl animate-bounce`}
+                          className={`absolute w-10 h-10 ${player.color} rounded-full border-4 border-white shadow-2xl`}
                           style={{ 
-                            transform: `translate(${i * 12}px, ${i * 12}px)`,
-                            animationDelay: `${i * 0.1}s`
+                            transform: `translate(${i * 12}px, ${i * 12}px)`
                           }}
                         >
                           <div className="absolute inset-0 flex items-center justify-center text-2xl">
@@ -528,7 +541,7 @@ function RootsRoutesGame() {
               {diceRoll && (
                 <div className="mt-6 text-center bg-white p-6 rounded-2xl border-4 border-purple-400 shadow-xl">
                   <p className="text-lg font-bold text-purple-700 mb-2">YOU ROLLED:</p>
-                  <div className={`text-8xl font-black text-purple-600 ${isDiceRolling ? 'animate-pulse' : 'animate-bounce'}`}>
+                  <div className={`text-8xl font-black text-purple-600 ${isDiceRolling ? 'animate-pulse' : ''}`}>
                     {diceRoll} 🎯
                   </div>
                 </div>
@@ -537,7 +550,7 @@ function RootsRoutesGame() {
               {emotionRoll && (
                 <div className="mt-6 text-center bg-white p-6 rounded-2xl border-4 border-pink-400 shadow-xl">
                   <p className="text-lg font-bold text-pink-700 mb-2">YOUR EMOTION VIBE:</p>
-                  <div className={`text-9xl ${isEmotionRolling ? 'animate-spin' : 'animate-bounce'}`}>
+                  <div className={`text-9xl ${isEmotionRolling ? 'animate-spin' : ''}`}>
                     {emotionRoll.emoji}
                   </div>
                   <p className="text-2xl font-black text-pink-600 mt-2">{emotionRoll.name.toUpperCase()}!</p>
@@ -556,21 +569,21 @@ function RootsRoutesGame() {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-12 h-12 ${player.color} rounded-full shadow-xl ${player.id === currentPlayerIndex ? 'animate-pulse' : ''} flex items-center justify-center text-2xl border-4 border-white`}>
+                  <div className={`w-12 h-12 ${player.color} rounded-full shadow-xl flex items-center justify-center text-2xl border-4 border-white`}>
                     {['😎', '🤩', '😁', '🥳', '😃', '🤗', '😊', '🌟'][player.id % 8]}
                   </div>
                   <span className="font-black text-xl">{player.name}</span>
                   {player.id === currentPlayerIndex && (
                     <div className="flex gap-1">
-                      <Zap className="w-6 h-6 text-yellow-500 animate-bounce" />
-                      <span className="text-2xl animate-pulse">👈</span>
+                      <Zap className="w-6 h-6 text-yellow-500" />
+                      <span className="text-2xl">👈</span>
                     </div>
                   )}
                 </div>
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 bg-pink-50 p-3 rounded-xl border-2 border-pink-200">
-                    <Heart className="w-6 h-6 text-red-500 animate-pulse" />
+                    <Heart className="w-6 h-6 text-red-500" />
                     <span className="font-black text-lg">{player.belongingTokens} Hearts</span>
                   </div>
                   
@@ -591,15 +604,15 @@ function RootsRoutesGame() {
                     <button
                       onClick={enterCircle}
                       disabled={player.id !== currentPlayerIndex}
-                      className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-3 rounded-xl font-black text-base hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse border-4 border-white"
+                      className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 text-white py-3 rounded-xl font-black text-base hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed border-4 border-white"
                     >
-                      <Trophy className="inline w-6 h-6 mr-2 animate-bounce" />
+                      <Trophy className="inline w-6 h-6 mr-2" />
                       ENTER THE CIRCLE! 🎊
                     </button>
                   )}
                   
                   {player.inCircle && (
-                    <div className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white py-3 rounded-xl text-center font-black text-base shadow-xl animate-pulse border-4 border-white">
+                    <div className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white py-3 rounded-xl text-center font-black text-base shadow-xl border-4 border-white">
                       🏆 IN THE CIRCLE! 🎉
                     </div>
                   )}
@@ -616,7 +629,7 @@ function RootsRoutesGame() {
               {currentCard.type === 'identity' && (
                 <>
                   <div className="text-center mb-6 bg-white p-6 rounded-2xl border-4 border-purple-300 shadow-xl">
-                    <div className="text-9xl mb-4 animate-bounce">{currentCard.emotion.emoji}</div>
+                    <div className="text-9xl mb-4">{currentCard.emotion.emoji}</div>
                     <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2">
                       {currentCard.region} TIME! 🎭
                     </h3>
@@ -662,18 +675,18 @@ function RootsRoutesGame() {
                   </p>
                   
                   {currentCard.effect === 'lose' && (
-                    <div className="mb-6 p-6 bg-red-100 border-4 border-red-300 rounded-2xl animate-pulse shadow-xl">
+                    <div className="mb-6 p-6 bg-red-100 border-4 border-red-300 rounded-2xl shadow-xl">
                       <p className="text-center text-red-900 text-2xl font-black flex items-center justify-center gap-3">
-                        <Heart className="w-8 h-8 animate-bounce" />
+                        <Heart className="w-8 h-8" />
                         😢 LOSE {currentCard.tokens} HEART{currentCard.tokens > 1 ? 'S' : ''} 💔
                       </p>
                     </div>
                   )}
                   
                   {currentCard.effect === 'gain' && (
-                    <div className="mb-6 p-6 bg-green-100 border-4 border-green-300 rounded-2xl animate-pulse shadow-xl">
+                    <div className="mb-6 p-6 bg-green-100 border-4 border-green-300 rounded-2xl shadow-xl">
                       <p className="text-center text-green-900 text-2xl font-black flex items-center justify-center gap-3">
-                        <Heart className="w-8 h-8 animate-bounce" />
+                        <Heart className="w-8 h-8" />
                         🎉 GAIN {currentCard.tokens} HEART{currentCard.tokens > 1 ? 'S' : ''} 💚
                       </p>
                     </div>
@@ -706,7 +719,7 @@ function RootsRoutesGame() {
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-fadeIn">
             <div className="bg-gradient-to-br from-white via-pink-50 to-purple-50 rounded-3xl shadow-2xl p-8 max-w-lg w-full transform animate-scaleIn border-8 border-pink-400">
               <div className="text-center mb-6">
-                <div className="text-7xl mb-4 animate-bounce">💝</div>
+                <div className="text-7xl mb-4">💝</div>
                 <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600 mb-3">
                   SPREAD THE LOVE!
                 </h3>
@@ -723,7 +736,7 @@ function RootsRoutesGame() {
                       onClick={() => giveToken(player.id)}
                       className="w-full bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 hover:from-pink-300 hover:via-purple-300 hover:to-blue-300 text-pink-900 py-4 rounded-2xl font-black transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl hover:scale-110 border-4 border-white text-lg"
                     >
-                      <Heart className="w-7 h-7 animate-pulse" />
+                      <Heart className="w-7 h-7" />
                       💝 {player.name} gives a HEART!
                     </button>
                   )
